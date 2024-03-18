@@ -1,6 +1,5 @@
 package com.example.homework_5
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,40 +8,48 @@ import androidx.lifecycle.ViewModel
 
 class CoolViewModel : ViewModel() {
 
-    private val defaultInput = "8 800 555 35 35"
+    private val outputExample = "+7 (xxx) xxx-xx-xx"
+    private val outputError = "Invalid input (must be 11 digits)"
+
     private val businessLogic = CoolBusinessLogic()
 
-    var state by mutableStateOf(defaultInput)
+    var state by mutableStateOf(CoolState.WAITING)
         private set
 
-    fun isValid(): Boolean {
-        return businessLogic.isValidPhoneNumber(getFilteredInput())
+    var inputState by mutableStateOf("")
+
+    var outputState by mutableStateOf(outputExample)
+
+    private fun resetState() {
+        state = CoolState.WAITING
+    }
+    fun updateInput(str: String) {
+        resetState()
+        inputState = str
     }
 
-    fun getFilteredInput(): String {
-        var temp = state
-        for (s in listOf(" ", "(", ")", "-", ".")) {
-            temp = temp.replace(s, "")
+    fun updateOutput() {
+        if (businessLogic.isValidPhoneNumber(inputState)) {
+            state = CoolState.SUCCESS
+            outputState = businessLogic.format(inputState)
+        } else {
+            state = CoolState.ERROR
+            outputState = outputError
         }
-        return temp
-    }
-
-    fun changeInput(input: String) {
-        state = input
-    }
-
-    fun getInput(): String {
-        return state
-    }
-
-    fun getOutput(): String {
-        if (!isValid()) {
-            return "Invalid number (must contain 11 digit)"
-        }
-        return businessLogic.format(getFilteredInput())
     }
 
     fun getOutputColor(): Color {
-        return if (isValid()) Color.Black else Color.Red
+        return when(state) {
+            CoolState.WAITING -> Color.Black
+            CoolState.ERROR -> Color.Red
+            CoolState.SUCCESS -> Color.Green
+        }
     }
+
+}
+
+enum class CoolState {
+    WAITING,
+    ERROR,
+    SUCCESS
 }
